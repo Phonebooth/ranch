@@ -78,7 +78,7 @@ maybe_wait(ListenerPid, MaxConns, _) ->
 async_accept(LSocket, Transport) ->
 	AcceptorPid = self(),
 	_ = spawn_link(fun() ->
-		case Transport:accept(LSocket, infinity) of
+		case Transport:accept(LSocket, accept_timeout()) of
 			{ok, CSocket} ->
 				Transport:controlling_process(CSocket, AcceptorPid),
 				AcceptorPid ! {accept, CSocket};
@@ -88,3 +88,10 @@ async_accept(LSocket, Transport) ->
 		end
 	end),
 	ok.
+
+-spec accept_timeout() -> integer().
+accept_timeout() ->
+    case os:getenv("RANCH_ACCEPT_TIMEOUT") of
+        false -> 30000;
+        Value -> list_to_integer(Value)
+    end.
