@@ -91,7 +91,8 @@ listen(Opts) ->
 	%% first argument.
 	ssl:listen(0, ranch:filter_options(Opts2,
 		[backlog, cacertfile, certfile, ciphers, ip,
-			keyfile, nodelay, password, port],
+			keyfile, nodelay, password, port, 
+            verify, depth, fail_if_no_peer_cert, keepalive],
 		[binary, {active, false}, {packet, raw},
 			{reuseaddr, true}, {nodelay, true}])).
 
