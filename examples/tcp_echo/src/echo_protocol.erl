@@ -1,19 +1,22 @@
 %% Feel free to use, reuse and abuse the code in this file.
 
 -module(echo_protocol).
--export([start_link/4, init/4]).
+-behaviour(ranch_protocol).
 
-start_link(ListenerPid, Socket, Transport, Opts) ->
-	Pid = spawn_link(?MODULE, init, [ListenerPid, Socket, Transport, Opts]),
+-export([start_link/4]).
+-export([init/4]).
+
+start_link(Ref, Socket, Transport, Opts) ->
+	Pid = spawn_link(?MODULE, init, [Ref, Socket, Transport, Opts]),
 	{ok, Pid}.
 
-init(ListenerPid, Socket, Transport, _Opts = []) ->
-	ok = ranch:accept_ack(ListenerPid),
+init(Ref, Socket, Transport, _Opts = []) ->
+	ok = ranch:accept_ack(Ref),
 	loop(Socket, Transport).
 
 loop(Socket, Transport) ->
 	case Transport:recv(Socket, 0, 5000) of
-		{ok, Data} ->
+		{ok, Data} when Data =/= <<4>> ->
 			Transport:send(Socket, Data),
 			loop(Socket, Transport);
 		_ ->

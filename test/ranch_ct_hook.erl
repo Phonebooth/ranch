@@ -1,4 +1,4 @@
-%% Copyright (c) 2011-2012, Loïc Hoguin <essen@ninenines.eu>
+%% Copyright (c) 2015-2016, Loïc Hoguin <essen@ninenines.eu>
 %%
 %% Permission to use, copy, modify, and/or distribute this software for any
 %% purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,12 @@
 %% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-{application, ranch, [
-	{description, "Socket acceptor pool for TCP protocols."},
-	{vsn, "0.4.0"},
-	{modules, []},
-	{registered, [ranch_sup, ranch_server]},
-	{applications, [
-		kernel,
-		stdlib
-	]},
-	{mod, {ranch_app, []}},
-	{env, []}
-]}.
+-module(ranch_ct_hook).
+
+-export([init/2]).
+
+init(_, _) ->
+	ct_helper:start([ranch]),
+	ct_helper:make_certs_in_ets(),
+	error_logger:add_report_handler(ct_helper_error_h),
+	{ok, undefined}.

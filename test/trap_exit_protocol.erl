@@ -1,4 +1,4 @@
--module(active_echo_protocol).
+-module(trap_exit_protocol).
 -behaviour(ranch_protocol).
 
 -export([start_link/4]).
@@ -9,18 +9,15 @@ start_link(Ref, Socket, Transport, Opts) ->
 	{ok, Pid}.
 
 init(Ref, Socket, Transport, _Opts = []) ->
+	process_flag(trap_exit, true),
 	ok = ranch:accept_ack(Ref),
 	loop(Socket, Transport).
 
 loop(Socket, Transport) ->
-	{OK, Closed, Error} = Transport:messages(),
-	Transport:setopts(Socket, [{active, once}]),
-	receive
-		{OK, Socket, Data} ->
+	case Transport:recv(Socket, 0, infinity) of
+		{ok, Data} ->
 			Transport:send(Socket, Data),
 			loop(Socket, Transport);
-		{Closed, Socket} ->
-			ok;
-		{Error, Socket, _} ->
+		_ ->
 			ok = Transport:close(Socket)
 	end.
