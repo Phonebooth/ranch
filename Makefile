@@ -1,50 +1,42 @@
 # See LICENSE for licensing information.
 
 PROJECT = ranch
+PROJECT_DESCRIPTION = Socket acceptor pool for TCP protocols.
+PROJECT_VERSION = 1.3.2
+PROJECT_REGISTERED = ranch_server
 
-DIALYZER = dialyzer
-REBAR = rebar
+# Options.
 
-all: app
+COMPILE_FIRST = ranch_transport
+CT_OPTS += -pa test -ct_hooks ranch_ct_hook []
+PLT_APPS = crypto public_key ssl
 
-# Application.
+CI_OTP ?= \
+	OTP_R16B OTP_R16B01 OTP_R16B02 OTP_R16B03-1 \
+	OTP-17.1.2 OTP-17.2.2 OTP-17.3.4 OTP-17.4.1 OTP-17.5.6.6 \
+	OTP-18.0.3 OTP-18.1.5 OTP-18.2.4.1 OTP-18.3.4.4 \
+	OTP-19.0.7 OTP-19.1.6
+#CI_HIPE ?= $(lastword $(CI_OTP))
+#CI_ERLLVM ?= $(CI_HIPE)
 
-deps:
-	@$(REBAR) get-deps
+# Dependencies.
 
-app: deps
-	@$(REBAR) compile
+LOCAL_DEPS = ssl
 
-clean:
-	@$(REBAR) clean
-	rm -f test/*.beam
-	rm -f erl_crash.dump
+DOC_DEPS = asciideck
 
-docs: clean-docs
-	@$(REBAR) doc skip_deps=true
+TEST_DEPS = ct_helper
+dep_ct_helper = git https://github.com/ninenines/ct_helper master
 
-clean-docs:
-	rm -f doc/*.css
-	rm -f doc/*.html
-	rm -f doc/*.png
-	rm -f doc/edoc-info
+# Standard targets.
 
-# Tests.
+include erlang.mk
 
-tests: clean app eunit ct
+# Also dialyze the tests.
 
-eunit:
-	@$(REBAR) -C rebar.tests.config eunit skip_deps=true
+DIALYZER_OPTS += --src -r test
 
-ct:
-	@$(REBAR) -C rebar.tests.config ct skip_deps=true
+# Use erl_make_certs from the tested release.
 
-# Dialyzer.
-
-build-plt:
-	@$(DIALYZER) --build_plt --output_plt .$(PROJECT).plt \
-		--apps kernel stdlib sasl tools inets crypto public_key ssl
-
-dialyze:
-	@$(DIALYZER) --src src --plt .$(PROJECT).plt \
-		-Werror_handling -Wrace_conditions -Wunmatched_returns # -Wunderspecs
+ci-setup:: $(DEPS_DIR)/ct_helper
+	cp ~/.kerl/builds/$(CI_OTP_RELEASE)/otp_src_git/lib/ssl/test/erl_make_certs.erl deps/ct_helper/src/
