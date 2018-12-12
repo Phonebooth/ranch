@@ -36,6 +36,8 @@
 -export([shutdown/2]).
 -export([close/1]).
 
+-compile(nowarn_deprecated_function).
+
 -type ssl_opt() :: {alpn_preferred_protocols, [binary()]}
 	| {beast_mitigation, one_n_minus_one | zero_n | disabled}
 	| {cacertfile, string()}
